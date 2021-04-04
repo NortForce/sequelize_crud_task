@@ -15,10 +15,14 @@ module.exports.createUser = async (req, res, next) => {
 
 module.exports.getAllUsers = async (req, res, next) => {
   try {
+    const { limit, offset } = req;
+
     const users = await User.findAll({
       attributes: {
         exclude: ['password'],
       },
+      limit,
+      offset,
     });
     res.status(200).send({
       data: users,
