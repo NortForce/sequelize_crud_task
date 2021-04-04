@@ -24,3 +24,54 @@ module.exports.getUserTasks = async (req, res, next) => {
     next(err);
   }
 };
+
+module.exports.getUserTask = async (req, res, next) => {
+  try {
+    const {
+      userInstance,
+      params: { id },
+    } = req;
+
+    const task = await userInstance.getTasks({ where: { id } });
+
+    res.send({ data: task });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports.updateUserTask = async (req, res, next) => {
+  try {
+    const {
+      userInstance,
+      params: { id },
+      body,
+    } = req;
+
+    const task = await Task.findOne({ where: { id, userId: userInstance.id } });
+
+    const updatedTask = await task.update(body, {
+      returning: true,
+    });
+
+    res.send({ data: updatedTask });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports.deleteUserTask = async (req, res, next) => {
+  try {
+    const {
+      userInstance,
+      params: { id },
+    } = req;
+
+    const task = await Task.findOne({ where: { id, userId: userInstance.id } });
+
+    task.destroy();
+    res.send({ data: task });
+  } catch (err) {
+    next(err);
+  }
+};
