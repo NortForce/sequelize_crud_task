@@ -1,10 +1,16 @@
 const { User } = require('../models');
+const createError = require('http-errors');
 
 module.exports.createUser = async (req, res, next) => {
   try {
     const { body } = req;
     const createdUser = await User.create(body);
-    console.log(createdUser);
+    
+    if(!createdUser) {
+      const err = createError(400, 'Error, while creating user');
+      return next(err);
+    }
+
     res.status(201).send({
       data: createdUser,
     });
@@ -24,6 +30,12 @@ module.exports.getAllUsers = async (req, res, next) => {
       limit,
       offset,
     });
+
+    if(!users.length) {
+      const err = createError(404, 'Users not found');
+      return next(err);
+    }
+
     res.status(200).send({
       data: users,
     });
@@ -42,32 +54,37 @@ module.exports.getUser = async (req, res, next) => {
       attributes: { exclude: ['password'] },
     });
 
+    if(!user) {
+      const err = createError(404, 'User not found');
+      return next(err);
+    }
+
     res.status(200).send({ data: user });
   } catch (err) {
     next(err);
   }
 };
 
-module.exports.updateUser = async (req, res, next) => {
-  try {
-    const {
-      params: { id },
-      body,
-    } = req;
+// module.exports.updateUser = async (req, res, next) => {
+//   try {
+//     const {
+//       params: { id },
+//       body,
+//     } = req;
 
-    const [rowsCount, [updatedUser]] = await User.update(body, {
-      where: { id },
-      returning: true,
-    });
+//     const [rowsCount, [updatedUser]] = await User.update(body, {
+//       where: { id },
+//       returning: true,
+//     });
 
-    // delete updatedUser.password;
-    updatedUser.password = undefined;
+//     // delete updatedUser.password;
+//     updatedUser.password = undefined;
 
-    res.send({ data: updatedUser });
-  } catch (err) {
-    next(err);
-  }
-};
+//     res.send({ data: updatedUser });
+//   } catch (err) {
+//     next(err);
+//   }
+// };
 
 module.exports.updateUserInstance = async (req, res, next) => {
   try {
@@ -76,6 +93,11 @@ module.exports.updateUserInstance = async (req, res, next) => {
     const updateduserInstance = await userInstance.update(body, {
       returning: true,
     });
+
+    if(!updateduserInstance) {
+      const err = createError(404, 'User not found');
+      return next(err);
+    }
 
     updateduserInstance.password = undefined;
 
@@ -93,7 +115,17 @@ module.exports.deleteUser = async (req, res, next) => {
 
     const user = await User.findByPk(id);
 
+    if(!user) {
+      const err = createError(404, 'User not found');
+      return next(err);
+    }
+
     const result = await user.destroy();
+
+    if(!result) {
+      const err = createError(500, 'Cant delete user');
+      return next(err);
+    }
     console.log(result);
     res.send({ data: user });
   } catch (err) {
