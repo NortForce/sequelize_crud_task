@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const createError = require('http-errors');
 const { Group, User } = require('../models');
 
 module.exports.createUserGroup = async (req, res, next) => {
@@ -51,3 +52,105 @@ module.exports.getUserGroups = async (req, res, next) => {
     next(err);
   }
 };
+
+module.exports.addUserToGroup = async (req, res, next) => {
+  try {
+    const {
+      body: { userId },
+      params: { groupId },
+    } = req;
+
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return next(createError(404, 'User not Found'));
+    }
+
+    const group = await Group.findByPk(groupId);
+
+    if (!group) {
+      return next(createError(404, 'Group not found'));
+    }
+
+    await group.addUser(user);
+
+    const groupWithUsers = await Group.findByPk(groupId, {
+      include: [
+        {
+          model: User,
+          attributes: {
+            exclude: ['password'],
+          },
+          through: {
+            attributes: [],
+          },
+        },
+      ],
+    });
+
+    // const groupWithUsers = await group.getUsers({
+      
+    //   include: [
+    //     {
+    //       model: User,
+    //       attributes: {
+    //         exclude: ['password'],
+    //       },
+    //       through: {
+    //         attributes: [],
+    //       },
+    //     },
+    //   ],
+    // });
+
+    res.send({ data: groupWithUsers });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports.deleteUserFromGroup = async (req, res, next) => {
+  try {
+    const {params: {groupId, userId}} = req;
+
+    const user = await User.findByPk(userId);
+
+    if(!user) {
+      return (createError(404, "User not found"));
+    }
+
+    const group = await Group.findByPk(groupId);
+
+    if(!group) {
+      return (createError(404, "Group not found"));
+    }
+
+    // const isUserInGroup = group.hasUser(user);
+
+    // if(!isUserInGroup) {
+    //   return (next(404, "No such user in group"));
+    // }
+
+    await group.removeUser(userId);
+
+    const newGroup = await Group.findByPk(groupId, {
+      include: [
+        {
+          model: User,
+          attributes: {
+            exclude: ['password'],
+          },
+          through: {
+            attributes: [],
+          },
+        },
+      ],
+    });
+
+
+    res.send(newGroup);
+
+  } catch (err) {
+    next(err);
+  }
+}
