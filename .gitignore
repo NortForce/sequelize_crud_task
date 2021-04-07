@@ -3,3 +3,5 @@
 /.idea/
 **/sandbox/
 /sequelize*.json
+/public
+/.env

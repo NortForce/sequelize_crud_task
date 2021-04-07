@@ -1,0 +1,9 @@
+const path = require('path');
+const { DB_CONFIG } = require('./config/config');
+
+module.exports = {
+  config: DB_CONFIG,
+  'models-path': path.resolve('models'),
+  'seeders-path': path.resolve('seeders'),
+  'migrations-path': path.resolve('migrations'),
+};
